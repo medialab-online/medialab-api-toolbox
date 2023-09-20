@@ -8,6 +8,7 @@ Full documentation of API methods is available [here](https://medialab.cc/api).
 
 - Bash script for uploading directly to MediaLab API: `upload-bash`
 - Plain javascript direct uploading with `fetch`: `upload-plain-javascript`
+- PHP and jQuery direct upload that keeps your private token secret: `upload-php-jquery`
 
 ## Copyright and license
 

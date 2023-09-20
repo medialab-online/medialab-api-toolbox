@@ -1,0 +1,248 @@
+<html>
+<head>
+    <link type="text/css" href="https://cdn.usebootstrap.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"/>
+    <style type="text/css" rel="stylesheet">
+	    pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+	    .string { color: green; }
+	    .number { color: darkorange; }
+	    .boolean { color: blue; }
+	    .null { color: magenta; }
+	    .key { color: red; }
+
+	    #dump {
+		    padding-left: 15px;
+		    padding-right: 15px;
+	    }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <h1>MediaLab Direct Upload</h1>
+	<p>This example illustrates how to use MediaLab as upload & media platform in your own project.
+		Files are uploaded directly to the API and are automatically transcoded when needed.
+		After the upload is complete, you can generate share links with the API to embed the media on your own page.
+	</p>
+	<p>Some considerations:</p>
+    <ul>
+        <li>After a video is uploaded, it may take a few minutes before it is available for viewing while it is being transcoded.</li>
+        <li>This code is meant as example and should not be used as-is in production.</li>
+		<li>It uses a "proxy" PHP file to execute all authenticated requests to the API. This way you don't have to expose your private token.</li>
+    </ul>
+	<h3>Flow of this example</h3>
+    <ul>
+        <li>Files can be selected from the file input.</li>
+        <li>On submit, it calls api_upload_start.php to register a new upload and retrieve the public upload URL.</li>
+        <li>It then uploads the files directly to MediaLab.</li>
+        <li>When finished, it calls api_upload_end.php to mark the upload as completed and retrieve the files.</li>
+        <li>A share link is generated to publicly view the uploaded files.</li>
+    </ul>
+    <form id="upload_medialab" enctype="multipart/form-data" action="#" method="post" class="form">
+        <div class="form-group row">
+            <div class="col-md-4">
+                <label for="reference">Upload reference:</label>
+                <input class="form-control" type="text" name="reference" id="reference" required="required" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-4">
+                <label for="upload_file">Select your files:</label>
+                <input class="form-control-file" type="file" id="upload_file"  multiple="multiple"/>
+            </div>
+        </div>
+		<input type="button" class="btn btn-info" value="Start upload" onclick="mltest_execUpload();" />
+		<a id="view_files" href="#" class="btn">View uploaded files</a>
+    </form>
+    <div id="progress-wrp" class="progress">
+        <div
+            class="progress-bar progress-bar-striped"
+            role="progressbar"
+            style="width: 0;"
+            aria-valuenow="0"
+            aria-valuemin="0"
+            aria-valuemax="100"
+        >0%</div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script type="text/javascript">
+
+	function mltest_execUpload() {
+		const files_input = $('#upload_file');
+		var files = [];
+
+		// append the file list to an array
+		Array.prototype.push.apply(files, files_input[0].files);
+
+
+		if(files.length === 0) {
+			mltest_dump('No files selected.');
+			return;
+		}
+		mltest_dump('Starting upload');
+
+		/**
+		 * Start off by retrieving the direct upload URL from the back-end.
+		 * Then, for each selected file, execute a separate XHR POST to upload the file.
+		 * Afterwards, call the api_upload_end.php to mark the upload as finished and receive a share link.
+		 */
+		mltest_getUploadUrlFromApi($('#reference').val(), function(api_upload) {
+			mltest_dump('Retrieving upload form URL.');
+			mltest_dump('Upload form URL received, executing POST.');
+			mltest_dump(api_upload);
+
+			mltest_execUploadFileQueue(api_upload.ulid, api_upload.url_upload_direct, files.shift(), files);
+		});
+	}
+
+	/**
+	 * Upload the given file, continue with the next one when done.
+	 * When there are no more, retrieve the results.
+	 *
+	 * @param string ulid
+	 * @param string upload_url
+	 * @param File file
+	 * @param File[] file
+	 */
+	function mltest_execUploadFileQueue(ulid, upload_url, file, files) {
+		var formData = new FormData();
+
+		// add assoc key values, this will be posts values
+		formData.append("file", file, file.name);
+
+		$.ajax({
+			type: "POST",
+			url: upload_url,
+			xhr: function () {
+				var myXhr = $.ajaxSettings.xhr();
+				if (myXhr.upload) {
+					myXhr.upload.addEventListener('progress', mltest_progressHandling, false);
+				}
+				return myXhr;
+			},
+			success: function (data) {
+				mltest_dump('Upload success.');
+				mltest_dump(data);
+
+				if(files.length > 0) {
+
+					// continue with next file in queue.
+					mltest_setProgress(0);
+					return mltest_execUploadFileQueue(ulid, upload_url, files.shift(), files);
+				}
+				// no more files to upload, retrieve data from api_upload_end.php regarding the upload.
+				mltest_displayUploadFiles(ulid);
+			},
+			error: function (error) {
+				mltest_dump('Upload error.');
+				mltest_dump(JSON.parse(error.responseText));
+			},
+			async: true,
+			data: formData,
+			cache: false,
+			contentType: false,
+			processData: false,
+			timeout: 60000
+		});
+	}
+
+	function mltest_progressHandling(event) {
+		var percent = 0;
+		var position = event.loaded || event.position;
+		var total = event.total;
+		if (event.lengthComputable) {
+			percent = Math.ceil(position / total * 100);
+		}
+		mltest_setProgress(percent);
+	}
+
+	function mltest_setProgress(percent) {
+		const progress_bar_id = "#progress-wrp";
+		$(progress_bar_id + " .progress-bar")
+			.css("width", +percent + "%")
+			.text(percent + "%")
+		;
+	}
+
+	/**
+	 * Get public upload URI
+	 * @param callback
+	 */
+	function mltest_getUploadUrlFromApi(upload_reference, callback) {
+		$.ajax({
+			type: "POST",
+			url: "api_upload_start.php",
+			data: {
+				'reference': upload_reference
+			},
+			success: callback,
+			error: function (error) {
+				mltest_dump('Unable to retrieve upload URL: ');
+				mltest_dump(JSON.parse(error.responseText));
+			}
+		});
+	}
+
+	function mltest_displayUploadFiles(ulid) {
+		mltest_dump('Retrieving file info..');
+		$.ajax({
+			type: "POST",
+			url: 'api_upload_end.php',
+			data: {
+				'ulid': ulid,
+			},
+			success: function(result) {
+				mltest_dump(result);
+				$('#view_files').attr('href', result.link);
+				$('#view_files').addClass('btn-success');
+			},
+			error: function (error) {
+				mltest_dump('Unable to retrieve file.');
+				mltest_dump(JSON.parse(error.responseText));
+			}
+		});
+	}
+
+	/**
+	 * Dump json data
+	 * @param data
+	 */
+	function mltest_dump(data) {
+		console.log(data);
+		if($('#dump').length === 0) {
+			$('body').append('<div id="dump"></div>');
+		}
+		if(typeof data != 'string') {
+			$('#dump').prepend('<pre>' + syntaxHighlightJson(data) + '</pre>');
+		} else {
+			$('#dump').prepend('<p>' + data + '</p>');
+		}
+	}
+
+	/**
+	 * Credits to SO
+	 * https://stackoverflow.com/questions/4810841/how-can-i-pretty-print-json-using-javascript
+	 */
+	function syntaxHighlightJson(json) {
+		if (typeof json != 'string') {
+			json = JSON.stringify(json, undefined, '\t');
+		}
+		json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+			var cls = 'number';
+			if (/^"/.test(match)) {
+				if (/:$/.test(match)) {
+					cls = 'key';
+				} else {
+					cls = 'string';
+				}
+			} else if (/true|false/.test(match)) {
+				cls = 'boolean';
+			} else if (/null/.test(match)) {
+				cls = 'null';
+			}
+			return '<span class="' + cls + '">' + match + '</span>';
+		});
+	}
+</script>
+</body>
+</html>
