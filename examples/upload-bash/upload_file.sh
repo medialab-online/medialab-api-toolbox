@@ -1,4 +1,5 @@
 #!/bin/bash
+
 ######################################################################
 # MEDIALAB
 ######################################################################
@@ -8,7 +9,7 @@
 #
 # Please obtain a Private Token through your Profile page first.
 # You can obtain the folder ID by navigation to the folder, then going to Details.
-#
+
 MEDIALAB_API_URL="https://YOUR-TENANT.medialab.app/api"
 MEDIALAB_API_TOKEN="PRIVATE-TOKEN"
 MEDIALAB_FOLDER=123456
@@ -44,7 +45,7 @@ fi
 echo "Upload registered with ID ${ULID}."
 echo "Starting file upload to ${URL_FILE_UPLOAD}..."
 FILE_UPLOAD_RESPONSE=$( \
-        curl -X POST ${URL_FILE_UPLOAD} \
+        curl -X POST "$URL_FILE_UPLOAD" \
         -F "file=@${FILE_PATH}" \
         -F "folder_id=${MEDIALAB_FOLDER}" \
         -F "title=${FILE_TITLE}" )
@@ -57,11 +58,11 @@ fi
 
 
 echo "Marking upload as completed (through ${URL_FILE_UPLOAD_ID_FINISH}).."
-FILE_UPLOAD_ID_DELETE_RESPONSE=$(curl -X DELETE ${URL_FILE_UPLOAD_ID_FINISH} -H "Authorization: Private-Token ${MEDIALAB_API_TOKEN}" )
+FILE_UPLOAD_ID_DELETE_RESPONSE=$(curl -X DELETE "$URL_FILE_UPLOAD_ID_FINISH" -H "Authorization: Private-Token ${MEDIALAB_API_TOKEN}" )
 
 echo "Generating direct share link to source file..."
 FILE_SHARE_URL_DIRECT=$( \
-        curl ${URL_FILE_SHARE} -H "Authorization: Private-Token ${MEDIALAB_API_TOKEN}" \
+        curl "$URL_FILE_SHARE" -H "Authorization: Private-Token ${MEDIALAB_API_TOKEN}" \
         | python3 -c "import sys, json; print(json.load(sys.stdin)['objects']['file']['url'])" )
 
 echo "Direct link: ${FILE_SHARE_URL_DIRECT}"
