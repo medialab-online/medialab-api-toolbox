@@ -1,0 +1,11 @@
+{
+  "name": "medialab-direct-upload",
+  "version": "0.0.1",
+  "license": "MIT",
+  "devDependencies": {
+    "browser-sync": "^2.29.3"
+  },
+  "scripts": {
+    "start": "browser-sync"
+  }
+}

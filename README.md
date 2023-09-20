@@ -7,6 +7,7 @@ Full documentation of API methods is available [here](https://medialab.cc/api).
 ## List of examples
 
 - Bash script for uploading directly to MediaLab API: `upload-bash`
+- Plain javascript direct uploading with `fetch`: `upload-plain-javascript`
 
 ## Copyright and license
 
