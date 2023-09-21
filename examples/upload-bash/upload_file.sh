@@ -56,8 +56,9 @@ if [ -z "$URL_FILE_SHARE" ]; then
         exit 1
 fi
 
-
 echo "Marking upload as completed (through ${URL_FILE_UPLOAD_ID_FINISH}).."
+# Response value can be used to get information about uploaded files
+# shellcheck disable=SC2034
 FILE_UPLOAD_ID_DELETE_RESPONSE=$(curl -X DELETE "$URL_FILE_UPLOAD_ID_FINISH" -H "Authorization: Private-Token ${MEDIALAB_API_TOKEN}" )
 
 echo "Generating direct share link to source file..."
