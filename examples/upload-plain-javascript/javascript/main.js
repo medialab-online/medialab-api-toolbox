@@ -8,6 +8,7 @@ import {
 } from './api.js';
 
 const uploadForm = document.querySelector('#file-upload-form');
+const formSubmit = uploadForm.querySelector('[type=submit]');
 const methodSelection = document.querySelector('#method-selection');
 
 (function initialize() {
@@ -30,8 +31,8 @@ const methodSelection = document.querySelector('#method-selection');
  * @returns {Promise<void>}
  */
 async function handleFormSubmit(event) {
-    // Prevent default form submit behaviour for custom handling of form
-    event.preventDefault();
+    event.preventDefault(); // Enable custom handling of form submit
+    formSubmit.disabled = true; // Prevent double submit
     displayUserMessage('Handling form submit.');
 
     const formData = new FormData(this);
@@ -42,28 +43,23 @@ async function handleFormSubmit(event) {
         return displayUserMessage(new Error('No files selected.'));
     }
 
-    const method = determineMethod();
-    displayUserMessage(`Using: ${method.name}`);
-    await method(formData, files);
-}
-
-/**
- * Determine the upload method user selected from the active tab
- *
- * @returns {function(FormData, File[]): Promise<void>}
- */
-function determineMethod() {
     const activeTabId = methodSelection.querySelector('[aria-selected="true"]').id;
 
     switch (activeTabId.replace(/-tab$/, '')) {
         case 'new-folder':
-            return newFolderMethod;
+            displayUserMessage('Using new folder method.')
+            await newFolderMethod(formData, files);
+            break;
         case 'existing-folder':
-            return existingFolderMethod;
+            displayUserMessage('Using existing folder method.')
+            await existingFolderMethod(formData, files);
+            break;
         default:
             displayUserMessage('Warning: Could not determine method, using default method');
-            return newFolderMethod;
+            await newFolderMethod(formData, files);
     }
+
+    formSubmit.disabled = false;
 }
 
 /**
