@@ -6,6 +6,7 @@
     "browser-sync": "^2.29.3"
   },
   "scripts": {
-    "start": "[ ! -f javascript/config.js ] && echo 'config.js not found' && exit 1; browser-sync"
+    "start": "yarn check-config && browser-sync",
+    "check-config": "if [ ! -f javascript/config.js ]; then echo 'config.js not found'; exit 1; fi; exit 0"
   }
 }
