@@ -3,10 +3,14 @@
 ######################################################################
 # MEDIALAB
 ######################################################################
+# Requirements:
+# - cURL
+# - Python3 (to parse the API results)
+#
 # How to use:
 # - Generate Private Token in MediaLab > Preferences > API Access
-# - Set Private Token and Lab URL in medialab_upload.sh
-# - Make sure Python is installed on the system (to parse the API results)
+# - Copy medialab.env.example to medialab.env
+# - Set Private Token and Lab URL in medialab.env
 # - Set up watch dir structure as indicated below
 # - Set up cronjob or scheduled task inside NAS/Synology to execute this script periodically
 #
@@ -48,23 +52,35 @@ trap 'rm -f $LOCKFILE' EXIT
 
 files="$(find "$SOURCE" -maxdepth 2 -type f -cmin +${WATCHER_FILE_AGE_MIN} -not -name '*.lock' -not -name '.gitkeep')"
 
-while IFS= read -r file; do
-    echo "Processing file ${file}"
-    target_folder_id=$(basename "$(dirname "${file}")")
-    target_folder_id=${target_folder_id%%_*}
-    echo "Target folder_id: ${target_folder_id}"
-    echo "$SOURCE"
-    filename=$(basename -- "$file")
-    mv "$file" "${file}.lock"
-    echo "Uploading file ${filename} to target folder ${target_folder_id}.."
+if [ -z "$files" ]; then
+#		echo "No files found, exiting."
+		rm -f "${LOCKFILE}"
+		exit 0;
+fi
 
-    if "${SCRIPT_PATH}/medialab_upload.sh" "$target_folder_id" "${file}.lock" "${filename}"; then
-        rm -f "${file}.lock"
+while IFS= read -r file_path; do
+	if [ -z "$file_path" ]; then
+            echo "No filename received, exiting."
+            break;
+    fi
+    echo "Processing file: ${file_path}"
+    target_folder_id=$(basename "$(dirname "${file_path}")")
+    target_folder_id=${target_folder_id%%_*}
+
+    file_basename=$(basename -- "$file_path")
+    file_path_tmp="${file_path}.lock"
+    mv "$file_path" "${file_path_tmp}"
+    echo "Uploading file ${file_basename} to target folder ${target_folder_id}.."
+
+	# the filename is specified separately to strip the .lock suffix
+    if "${SCRIPT_PATH}/medialab_upload.sh" "$target_folder_id" "${file_path_tmp}" "${file_basename}"; then
+        rm -f "${file_path_tmp}"
+		echo "Finished uploading ${file_path}."
     else
-        mv "${file}.lock" "${file}"
+        mv "${file_path_tmp}" "${file_path}"
+		echo "Error while uploading ${file_path}."
     fi
 
-    echo "Finished processing ${file}."
 done <<< "$files"
 
 rm -f "${LOCKFILE}"

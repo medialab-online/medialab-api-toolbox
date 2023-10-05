@@ -2,6 +2,7 @@
 
 ######################################################################
 # MEDIALAB
+# Syntax: medialab_upload.sh <folder_id> <file_path> <filename>
 ######################################################################
 
 SCRIPT_PATH="$(
@@ -24,11 +25,11 @@ if ! command -v ${CMD_PYTHON} &>/dev/null; then
 fi
 
 if [ -z "$1" ] || [ -z "$2" ]; then
-    exit_on_error "No file given, syntax: medialab_upload.sh <folder_id> <file> [title]"
+    exit_on_error "No file given, syntax: medialab_upload.sh <folder_id> <file> <filename>"
 fi
 
 if [ ! -f "$2" ]; then
-    exit_on_error "File not found: ${1}"
+    exit_on_error "File not found: ${2}"
 fi
 
 if [ -f "${SCRIPT_PATH}/medialab.env" ]; then
@@ -71,7 +72,7 @@ ML_URL_FILE_UPLOAD_ID_FINISH=$(echo "$ML_UPLOAD_ID_RESPONSE" | ${CMD_PYTHON} -c 
 
 ML_FILE_UPLOAD_RESPONSE=$(
     curl -s -X POST "$ML_URL_FILE_UPLOAD" \
-         -F "file=@${FILE_PATH}" \
+         -F "file=@${FILE_PATH};filename=${FILE_TITLE}" \
          -F "folder_id=${MEDIALAB_FOLDER}" \
          -F "title=${FILE_TITLE}"
 ) || exit 1
