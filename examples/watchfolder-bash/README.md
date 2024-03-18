@@ -20,13 +20,13 @@ It relies on a periodic job to run the watcher, which will upload files to the t
 
 Example directory structure: 
 
-- watchfolder/
-- watchfolder/medialab.env
-- watchfolder/medialab_upload.sh
-- watchfolder/medialab_watcher.sh
-- watchfolder/dropbox/
-- watchfolder/dropbox/123456_Project_X
-- watchfolder/dropbox/123457_Project_Y
+- `watchfolder/`
+- `watchfolder/medialab.env`
+- `watchfolder/medialab_upload.sh`
+- `watchfolder/medialab_watcher.sh`
+- `watchfolder/dropbox/`
+- `watchfolder/dropbox/123456_Project_X`
+- `watchfolder/dropbox/123457_Project_Y`
 
 Different watch folders can be set up inside `dropbox`.
 Each watch folder must be prefixed with the folder_id from MediaLab. 
@@ -46,5 +46,5 @@ It does not need to match the label in MediaLab.
 
 ## License
 
-License: [MIT](LICENSE)
+License: [MIT](../../LICENSE)
 

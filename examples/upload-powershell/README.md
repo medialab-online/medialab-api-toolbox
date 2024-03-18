@@ -3,7 +3,7 @@
 Script is adapted from a
 [GitHub Gist](https://gist.github.com/dkittell/f029b6c7d1c46ebcffcb)
 by [David Kittell](https://github.com/dkittell).
-Credits go to David Kittell.
+Credits for the first version of the script go to David Kittell.
 
 ## Setup
 
@@ -12,12 +12,14 @@ In the script `MediaLabUploadFTP.ps1`, fill in the following things:
 - The location of your MediaLab FTP server: `$FTPHost`
 - Your FTP username: `$FTPUser`
 - Your password: `$FTPPass` \
-  Keep in mind that if an attacker has access to the script with your password in it, the security of your account is compromised
+  ⚠️ Keep in mind that if an attacker has access to the script with your password in it, the security of your account is compromised
+- The directory you want to upload files from: `$UploadFolder`
+- The file you want to log messages to, should be an existing file: `$LogFile`
 
 ## Running script
 
 - Open `powershell` window
-- Change directory (`cd`) to where the script is
+- Change directory (`cd`) to directory where the script is
 - Run with `.\MediaLabUploadFTP.ps1`
 
 ## Running script periodically
@@ -33,7 +35,7 @@ To create a scheduled task on Windows, use these steps
   here replace the file path with the location of your PowerShell script.
 - Complete task creation, the Task Scheduler will run the script automatically on your specified schedule.
 
-## Warning
+## ⚠️ Warning
 
 Before any source code or program is used, it is suggested you fully understand what it is doing.
 For example, the `MediaLabUploadFTP.ps1` script removes files after uploading.

@@ -47,11 +47,11 @@ async function handleFormSubmit(event) {
 
     switch (activeTabId.replace(/-tab$/, '')) {
         case 'new-folder':
-            displayUserMessage('Using new folder method.')
+            displayUserMessage('Using new folder method.');
             await newFolderMethod(formData, files);
             break;
         case 'existing-folder':
-            displayUserMessage('Using existing folder method.')
+            displayUserMessage('Using existing folder method.');
             await existingFolderMethod(formData, files);
             break;
         default:
